@@ -1,0 +1,40 @@
+import librosa
+import numpy as np
+from sklearn.preprocessing import StandardScaler
+from sklearn.svm import SVC
+
+# Load the audio file and extract the features
+audio_path = "speech.wav"
+sample_rate = 16000  # sample rate of the audio file
+duration = 3  # duration of the audio file in seconds
+
+# Load the audio file and extract the raw waveform
+waveform, _ = librosa.core.load(audio_path, sr=sample_rate, duration=duration)
+
+# Extract the Mel-frequency cepstral coefficients (MFCCs)
+mfccs = librosa.feature.mfcc(waveform, sr=sample_rate, n_mfcc=13)
+
+# Flatten the MFCCs into a 1D array
+X = mfccs.flatten()
+
+# Standardize the features using StandardScaler
+scaler = StandardScaler()
+X_scaled = scaler.fit_transform(X.reshape(-1, 1))
+
+# Load the emotion labels
+emotions = np.load("emotion_labels.npy")
+
+# Split the data into train and test sets
+test_size = 0.2
+X_train, X_test, y_train, y_test = train_test_split(X_scaled, emotions, test_size=test_size)
+
+# Train an SVM classifier on the standardized MFCCs
+clf = SVC(kernel="linear")
+clf.fit(X_train, y_train)
+
+# Predict the emotion of the speech using the SVM classifier
+y_pred = clf.predict(X_test)
+
+# Evaluate the performance of the classifier
+accuracy = clf.score(X_test, y_test)
+print("Accuracy: {:.2f}".format(accuracy))
